@@ -11,6 +11,11 @@ export default function ModuleRoutes(app, db) {
   };
   
   const createModule = (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser || (currentUser.role !== "FACULTY" && currentUser.role !== "ADMIN")) {
+      res.status(403).json({ message: "Only faculty and admins can create modules" });
+      return;
+    }
     const { courseId } = req.params;
     const module = {
       ...req.body,
@@ -20,17 +25,27 @@ export default function ModuleRoutes(app, db) {
     res.json(newModule);
   };
   
-  const deleteModule = (req, res) => {
-    const { moduleId } = req.params;
-    const status = dao.deleteModule(moduleId);
-    res.send(status);
-  };
-  
-  const updateModule = async (req, res) => {
+  const updateModule = (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser || (currentUser.role !== "FACULTY" && currentUser.role !== "ADMIN")) {
+      res.status(403).json({ message: "Only faculty and admins can update modules" });
+      return;
+    }
     const { moduleId } = req.params;
     const moduleUpdates = req.body;
-    const status = await dao.updateModule(moduleId, moduleUpdates);
-    res.send(status);
+    const status = dao.updateModule(moduleId, moduleUpdates);
+    res.json(status);
+  };
+  
+  const deleteModule = (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser || (currentUser.role !== "FACULTY" && currentUser.role !== "ADMIN")) {
+      res.status(403).json({ message: "Only faculty and admins can delete modules" });
+      return;
+    }
+    const { moduleId } = req.params;
+    const status = dao.deleteModule(moduleId);
+    res.json(status);
   };
   
   // Route declarations at the bottom

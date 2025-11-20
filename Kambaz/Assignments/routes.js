@@ -3,6 +3,11 @@ import AssignmentsDao from "./dao.js";
 export default function AssignmentRoutes(app, db) {
   const dao = AssignmentsDao(db);
   
+  // Helper function to check if user is faculty or admin
+  const isFacultyOrAdmin = (user) => {
+    return user && (user.role === "FACULTY" || user.role === "ADMIN");
+  };
+  
   // Callback functions
   const findAssignmentsForCourse = (req, res) => {
     const { courseId } = req.params;
@@ -17,6 +22,12 @@ export default function AssignmentRoutes(app, db) {
   };
   
   const createAssignment = (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!isFacultyOrAdmin(currentUser)) {
+      res.status(403).json({ message: "Only faculty and admins can create assignments" });
+      return;
+    }
+    
     const { courseId } = req.params;
     const assignment = {
       ...req.body,
@@ -27,12 +38,24 @@ export default function AssignmentRoutes(app, db) {
   };
   
   const deleteAssignment = (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!isFacultyOrAdmin(currentUser)) {
+      res.status(403).json({ message: "Only faculty and admins can delete assignments" });
+      return;
+    }
+    
     const { assignmentId } = req.params;
     const status = dao.deleteAssignment(assignmentId);
     res.json(status);
   };
   
   const updateAssignment = (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!isFacultyOrAdmin(currentUser)) {
+      res.status(403).json({ message: "Only faculty and admins can update assignments" });
+      return;
+    }
+    
     const { assignmentId } = req.params;
     const assignmentUpdates = req.body;
     const status = dao.updateAssignment(assignmentId, assignmentUpdates);
