@@ -42,10 +42,13 @@ const sessionOptions = {
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
+  proxy: true, // Trust the reverse proxy
   cookie: {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production", // Requires HTTPS
     httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    domain: process.env.NODE_ENV === "production" ? undefined : "localhost"
   }
 };
 
