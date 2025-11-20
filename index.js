@@ -13,42 +13,51 @@ import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 
 const app = express();
 
+// Trust proxy - MUST be before session
+app.set('trust proxy', 1);
+
+// CORS Configuration - MUST be first middleware
 app.use(
   cors({
     credentials: true,
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
       
-      // Allow localhost and any vercel.app subdomain
       const allowedOrigins = [
-        /^http:\/\/localhost:3000$/,
+        "http://localhost:3000",
+        process.env.CLIENT_URL,
         /^https:\/\/.*\.vercel\.app$/
       ];
       
-      const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
+      const isAllowed = allowedOrigins.some(allowed => {
+        if (typeof allowed === 'string') {
+          return origin === allowed;
+        }
+        return allowed.test(origin);
+      });
       
-      if (isAllowed || origin === process.env.CLIENT_URL) {
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.log("CORS blocked origin:", origin);
+        callback(null, false);
       }
     },
   })
 );
 
-// Session configuration for production
+// Session configuration
 const sessionOptions = {
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
-  proxy: true, // Trust the reverse proxy
+  proxy: true,
+  name: 'kambaz.sid',
   cookie: {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    secure: process.env.NODE_ENV === "production", // Requires HTTPS
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: process.env.NODE_ENV === "production" ? undefined : "localhost"
+    maxAge: 24 * 60 * 60 * 1000
   }
 };
 
