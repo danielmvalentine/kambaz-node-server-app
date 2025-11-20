@@ -13,37 +13,46 @@ import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 
 const app = express();
 
-// CORS MUST be first
 app.use(
   cors({
     credentials: true,
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      
+      // Allow localhost and any vercel.app subdomain
+      const allowedOrigins = [
+        /^http:\/\/localhost:3000$/,
+        /^https:\/\/.*\.vercel\.app$/
+      ];
+      
+      const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
+      
+      if (isAllowed || origin === process.env.CLIENT_URL) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
   })
 );
 
-// Session configuration
+// Session configuration for production
 const sessionOptions = {
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+  }
 };
 
-if (process.env.SERVER_ENV !== "development") {
-  sessionOptions.proxy = true;
-  sessionOptions.cookie = {
-    sameSite: "none",
-    secure: true,
-    domain: process.env.SERVER_URL,
-  };
-}
-
-// Session middleware MUST come before routes
 app.use(session(sessionOptions));
-
-// JSON parser MUST come before routes
 app.use(express.json());
 
-// NOW register routes (after all middleware)
+// Routes
 UserRoutes(app, db);
 CourseRoutes(app, db);
 ModuleRoutes(app, db);
