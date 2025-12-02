@@ -1,50 +1,37 @@
-export default function UsersDao(db) {
-  const { users } = db;
-  
-  const findUserByCredentials = (username, password) => {
-    return users.find((user) => user.username === username && user.password === password);
-  };
-  
-  const findUserByUsername = (username) => {
-    return users.find((user) => user.username === username);
-  };
-  
-  const findUserById = (userId) => {
-    return users.find((user) => user._id === userId);
-  };
-  
+import model from "./model.js";
+import { v4 as uuidv4 } from "uuid";
+
+export default function UsersDao() {
   const createUser = (user) => {
-    const newUser = { 
-      ...user, 
-      _id: Date.now().toString(),
-      role: user.role || "STUDENT"  // Default to STUDENT if no role provided
-    };
-    users.push(newUser);
-    return newUser;
+    const newUser = { ...user, _id: uuidv4() };
+    return model.create(newUser);
+  }  
+  const findAllUsers = () => model.find();
+  const findUserById = (userId) => model.findById(userId);
+  const findUserByUsername = (username) => model.findOne({ username: username });
+  const findUserByCredentials = (username, password) => model.findOne({ username, password });
+  const findUsersByIds = (userIds) => model.find({ _id: { $in: userIds } });
+  const findUsersByRole = (role) => model.find({ role });
+  const findUsersByPartialName = (partialName) => {
+    const regex = new RegExp(partialName, "i");
+    return model.find({
+      $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+    });
   };
+  const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $set: user });
+  const deleteUser = (userId) => model.findByIdAndDelete( userId );
   
-  const updateUser = (userId, userUpdates) => {
-    const user = users.find((user) => user._id === userId);
-    if (user) {
-      Object.assign(user, userUpdates);
-    }
-    return user;
-  };
   
-  const deleteUser = (userId) => {
-    const index = users.findIndex((user) => user._id === userId);
-    if (index !== -1) {
-      users.splice(index, 1);
-    }
-    return { status: "ok" };
-  };
-  
-  return {
-    findUserByCredentials,
-    findUserByUsername,
-    findUserById,
-    createUser,
-    updateUser,
-    deleteUser,
+  return { 
+    createUser, 
+    findAllUsers, 
+    findUserById, 
+    findUserByUsername, 
+    findUserByCredentials, 
+    findUsersByIds,
+    findUsersByRole,
+    findUsersByPartialName,  // MAKE SURE THIS IS IN THE RETURN!
+    updateUser, 
+    deleteUser 
   };
 }
