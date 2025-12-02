@@ -65,14 +65,17 @@ export default function UserRoutes(app) {
   };
   
   const updateUser = async (req, res) => {
-    const { userId } = req.params;
-    const userUpdates = req.body;
-    await dao.updateUser(userId, userUpdates);
     const currentUser = req.session["currentUser"];
-   if (currentUser && currentUser._id === userId) {
-     req.session["currentUser"] = { ...currentUser, ...userUpdates };
-   }
-    res.json(currentUser);
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+    const userUpdates = req.body;
+    await dao.updateUser(currentUser._id, userUpdates);
+    
+    const updatedUser = await dao.findUserById(currentUser._id);
+    req.session["currentUser"] = updatedUser;
+    res.json(updatedUser);
   };
 
 
@@ -92,6 +95,16 @@ export default function UserRoutes(app) {
     res.json(user);
   };
 
+  const updateUserById = async (req, res) => {
+    const { userId } = req.params;
+    const userUpdates = req.body;
+    await dao.updateUser(userId, userUpdates);
+    
+    const updatedUser = await dao.findUserById(userId);
+    res.json(updatedUser);
+  };
+  
+  app.put("/api/users/:userId", updateUserById);
   app.post("/api/users", createUser);
   app.delete("/api/users/:userId", deleteUser);
   app.get("/api/users/:userId", findUserById);
@@ -99,5 +112,5 @@ export default function UserRoutes(app) {
   app.post("/api/users/signin", signin);
   app.post("/api/users/signout", signout);
   app.get("/api/users/profile", profile);
-  app.put("/api/users/:userId", updateUser);
+  app.put("/api/users/profile", updateUser);
 }
