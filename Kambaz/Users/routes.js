@@ -2,7 +2,6 @@ import UsersDao from "./dao.js";
 import { v4 as uuidv4 } from "uuid";
 let currentUser = null;
 export default function UserRoutes(app) {
-  
   const dao = UsersDao();
 
   const findAllUsers = async (req, res) => {
