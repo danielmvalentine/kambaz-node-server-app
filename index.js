@@ -68,15 +68,17 @@ const sessionOptions = {
 app.use(session(sessionOptions));
 app.use(express.json());
 
-// Add this in index.js BEFORE UserRoutes
-app.get("/api/test-session", (req, res) => {
-  console.log("Test session hit");
-  console.log("Session:", req.session);
-  req.session.test = "working";
-  res.json({ session: req.session });
+app.use((req, res, next) => {
+  console.log("=== INCOMING REQUEST ===");
+  console.log("Path:", req.path);
+  console.log("Session ID:", req.sessionID);
+  console.log("Session data:", req.session);
+  console.log("Cookies:", req.headers.cookie);
+  next();
 });
 
 // Routes
+
 UserRoutes(app, db);
 CourseRoutes(app, db);
 ModuleRoutes(app, db);
