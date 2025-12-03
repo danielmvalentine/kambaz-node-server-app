@@ -1,33 +1,41 @@
-export default function ModulesDao(db) {
-    const { modules } = db;
-    
-    const findModulesForCourse = (courseId) => {
-      return modules.filter((module) => module.course === courseId);
-    };
-    
-    const createModule = (module) => {
-      const newModule = { ...module, _id: Date.now().toString() };
-      modules.push(newModule);
-      return newModule;
-    };
-    
-    const deleteModule = (moduleId) => {
-      const { modules } = db;
-      db.modules = modules.filter((module) => module._id !== moduleId);
-      return { status: "ok" };
-    };
-    
-    const updateModule = (moduleId, moduleUpdates) => {
-      const { modules } = db;
-      const module = modules.find((module) => module._id === moduleId);
-      Object.assign(module, moduleUpdates);
-      return module;
-    };
-    
-    return { 
-      findModulesForCourse, 
-      createModule, 
-      deleteModule, 
-      updateModule 
-    };
-  }
+import { v4 as uuidv4 } from "uuid";
+import model from "../Courses/model.js";
+
+export default function ModulesDao() {
+  const findModulesForCourse = async (courseId) => {
+    const course = await model.findById(courseId);
+    return course.modules;
+  };
+  
+  const createModule = async (courseId, module) => {
+    const newModule = { ...module, _id: uuidv4() };
+    await model.updateOne(
+      { _id: courseId },
+      { $push: { modules: newModule } }
+    );
+    return newModule;
+  };
+  
+  const deleteModule = async (courseId, moduleId) => {
+    const status = await model.updateOne(
+      { _id: courseId },
+      { $pull: { modules: { _id: moduleId } } }
+    );
+    return status;
+  };
+  
+  const updateModule = async (courseId, moduleId, moduleUpdates) => {
+    const course = await model.findById(courseId);
+    const module = course.modules.id(moduleId);
+    Object.assign(module, moduleUpdates);
+    await course.save();
+    return module;
+  };
+  
+  return { 
+    findModulesForCourse, 
+    createModule, 
+    deleteModule, 
+    updateModule 
+  };
+}
