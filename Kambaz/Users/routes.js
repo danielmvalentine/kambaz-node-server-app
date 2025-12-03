@@ -64,29 +64,25 @@ export default function UserRoutes(app) {
   };
   
   const updateUser = async (req, res) => {
-    console.log("=== UPDATE USER CALLED ===");
-    console.log("Session currentUser:", req.session["currentUser"]);
+    console.log("========================================");
+    console.log("UPDATE USER ROUTE HIT");
+    console.log("Session:", req.session);
+    console.log("Current user:", req.session["currentUser"]);
     console.log("Request body:", req.body);
+    console.log("========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("No current user - returning 401");
+      console.log("NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
     
     const userUpdates = req.body;
-    console.log("Updating user ID:", currentUser._id);
-    console.log("With updates:", userUpdates);
-    
     await dao.updateUser(currentUser._id, userUpdates);
     
     const updatedUser = await dao.findUserById(currentUser._id);
-    console.log("Updated user from DB:", updatedUser);
-    
     req.session["currentUser"] = updatedUser;
-    console.log("Session updated with:", req.session["currentUser"]);
-    
     res.json(updatedUser);
   };
 
