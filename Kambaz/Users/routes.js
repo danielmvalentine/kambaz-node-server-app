@@ -112,7 +112,6 @@ export default function UserRoutes(app) {
     res.json(updatedUser);
   };
   
-  app.put("/api/users/:userId", updateUserById);
   app.post("/api/users", createUser);
   app.delete("/api/users/:userId", deleteUser);
   app.get("/api/users/:userId", findUserById);
@@ -121,4 +120,5 @@ export default function UserRoutes(app) {
   app.post("/api/users/signout", signout);
   app.get("/api/users/profile", profile);
   app.put("/api/users/profile", updateUser);
+  app.put("/api/users/:userId", updateUserById);
 }
